@@ -4,18 +4,7 @@
 #define CRAWL_RESOLUTION 0.5
 
 float old_angle, offset=0;
-char angle_interlock=1;
 
-float slope(float x1,float x2,float y1,float y2)
-{
-	float difx = x2-x1;
-	float dify = y2-y1;
-	float m;
-	if(difx==0.0) m = 999999999.9;
-	else m=dify/difx;
-	
-	return m;
-}
 /*******************************************
  * Calculates angle around  (0,0)
  * Handles singularity (0,0)
@@ -30,12 +19,11 @@ double get_angle(float x,float y)
 					}
 				else
 					{
-						if(x==0.0)x=0.000000001;  //look for singularity and substitute with a number which is very small
-						angle=atan2(y,x)*57.2958+offset;	
+						if(x==0.0)x=0.00000000001;  //look for singularity and substitute with a number which is very small
+						angle=atan2(y,x)*180/M_PI+offset;	// convert to degrees
 					}
-					
 				
-
+				// If angle becomes 90 degrees less then The tangent function has come full circle	
 				if((old_angle>(angle+90))) 
 					{
 	//			    	printf("; *************old=%0.3f new=%0.3f angle+360=%0.2f x=%0.2f y=%0.2f \n",old_angle,angle,angle+360,x,y);
@@ -60,8 +48,8 @@ void crawl(float x1,float x2,float y1,float y2,float z)
 	float newx,newy;
 	float r,a;
 	float xcrawl=0.0,ycrawl=0.0;
-	float distancexy=hypot(difx,dify);  // distance between (x1,y1) and (x2,y2)
-	int crawl_amount=distancexy/CRAWL_RESOLUTION;
+
+	int crawl_amount=hypot(difx,dify)/CRAWL_RESOLUTION; // distance between (x1,y1) and (x2,y2) / CRAWL_RESOLUTION
 	
 	xcrawl=difx/crawl_amount;  // x increment
 	ycrawl=dify/crawl_amount;  //y increment
@@ -80,7 +68,6 @@ void crawl(float x1,float x2,float y1,float y2,float z)
 //        printf("(%0.2f,%0.2f) (%0.2f,%0.2f) (%0.2f,%0.2f) angle=%0.3f oldangle=%0.2f\n",x1,y1,newx,newy,x2,y2,a,old_angle);
 // printf("G1 X%0.1f Z%0.2f A%0.1f ;x=%0.2f y=%0.2f newx=%0.2f newy=%0.2f  \n",z,r,a,x1,y1,newx,newy); 
 		printf("G1 X%0.1f Z%0.2f A%0.1f \n",z,r,a); 
-	
 
 		}
 }
@@ -92,14 +79,9 @@ int main(int argc, char* argv[])
 	char c[15];
 	char d[15];
 	char e[15];
-	char f[15];
     char line[256];
-    float x, y, z,oldx=0.0,oldy=0.0,oldz=0.0;
-	float m;
-	float rmax=0.0;
-	float rmin=10000.0;
-	double  angle,r;
-	int rem,gline=0;
+    float x, y, z,oldx=0.0,oldy=0.0;
+	int gline=0;
     char const* const fileName = argv[1]; /* should check that argc > 1 */
     FILE* fp = fopen(fileName, "r"); /* should check the result */
 
@@ -110,16 +92,9 @@ int main(int argc, char* argv[])
 				if(c[0]=='X') {sscanf(c,"X%f",&x);}
 				if(d[0]=='Y') {sscanf(d,"Y%f",&y);}
 				if(b[0]=='Z') {sscanf(b,"Z%f",&z);}
-				r=hypot(x,y);
-//				angle=get_angle(x,y);
-				rem=(int)angle%360;
                 if (gline++!=0) crawl(oldx,x,oldy,y,z);  // skip first line
-//							printf("G1 X%0.1f Z%0.2f A%0.2f\n",z,r,angle); 
-//				printf("G1 X%0.1f Z%0.2f A%0.2f ;x=%0.2f y= %0.2f rem=%d \n",z,r,angle,x,y,rem); 
-//				printf("%0.1f, %d\n",r,rem); 
                 oldx=x;
                 oldy=y;
-                oldz=z;	
 		} // endif line starts with G
     }  // endwhile
 
